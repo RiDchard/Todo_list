@@ -9,9 +9,9 @@
 <body>
   <!-- Main container -->
   <main class="app">
-    <h1>ToDo List</h1>
+    <h1>Todo List</h1>
 
-    <!-- Controls: input + two buttons (Add, Clear completed) -->
+    <!-- Controls: input + actions -->
     <div class="controls">
       <input
         id="todo-input"
@@ -27,7 +27,21 @@
       </button>
     </div>
 
-    <!-- UL container: JS inserts <li> items here -->
+    <!-- Filters + Counters -->
+    <div class="toolbar" role="region" aria-label="Filters">
+      <div class="filters" role="tablist" aria-label="Filter tasks">
+        <button class="filter-btn active" data-filter="all" role="tab" aria-selected="true">All</button>
+        <button class="filter-btn" data-filter="active" role="tab" aria-selected="false">Active</button>
+        <button class="filter-btn" data-filter="completed" role="tab" aria-selected="false">Completed</button>
+      </div>
+      <div class="counter" aria-live="polite">
+        <span id="count-total">0</span> total •
+        <span id="count-active">0</span> active •
+        <span id="count-completed">0</span> completed
+      </div>
+    </div>
+
+    <!-- Tasks go here -->
     <ul id="todo-list" aria-live="polite"></ul>
   </main>
 
