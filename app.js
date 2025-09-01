@@ -1,177 +1,182 @@
-// =========================
-// Grab references to DOM elements
-// =========================
-const input    = document.getElementById('todo-input');      // text box
-const addBtn   = document.getElementById('add-todo');        // Add button
-const clearBtn = document.getElementById('clear-completed'); // Clear completed
-const list     = document.getElementById('todo-list');       // <ul> container
+// DOM refs
+const input    = document.getElementById('todo-input');
+const addBtn   = document.getElementById('add-todo');
+const clearBtn = document.getElementById('clear-completed');
+const list     = document.getElementById('todo-list');
 
-// =========================
-// State (single source of truth)
-// Each todo item: { id, text, done }
-// =========================
+// Filters
+const filterBtns = document.querySelectorAll('.filter-btn');
+const counts = {
+  total: document.getElementById('count-total'),
+  active: document.getElementById('count-active'),
+  completed: document.getElementById('count-completed'),
+};
+
+// State
 let todos = [];
+let currentFilter = localStorage.getItem('filter') || 'all'; // all | active | completed
 
-/* Load previously saved tasks from localStorage.
- * localStorage stores strings only, so we parse JSON.
- */
+// Storage
 function loadTodos() {
-  try {
-    const raw = localStorage.getItem('todos');
-    todos = raw ? JSON.parse(raw) : [];
-  } catch {
-    todos = [];
-  }
+  const raw = localStorage.getItem('todos');
+  todos = raw ? JSON.parse(raw) : [];
 }
-
-/* Save tasks to localStorage.
- * We stringify (serialize) our array into JSON-formatted text.
- */
 function saveTodos() {
   localStorage.setItem('todos', JSON.stringify(todos));
 }
 
-/* Show or hide the Clear Completed button depending on how many tasks are done. */
-function updateClearBtn() {
-  const doneCount = todos.filter(t => t.done).length;
-  if (doneCount > 0) {
-    clearBtn.hidden = false;
-    clearBtn.removeAttribute('disabled');
-    clearBtn.classList.remove('is-disabled');
-  } else {
-    clearBtn.hidden = true; // hide when nothing to clear
-    // If you want to show but disable instead:
-    // clearBtn.hidden = false;
-    // clearBtn.setAttribute('disabled', 'true');
-    // clearBtn.classList.add('is-disabled');
-  }
+// Counters
+function updateCounts() {
+  const total = todos.length;
+  const completed = todos.filter(t => t.done).length;
+  const active = total - completed;
+  counts.total.textContent = total;
+  counts.active.textContent = active;
+  counts.completed.textContent = completed;
 }
 
-/* Build a single <li> element for a todo.
- * We wrap the text in a <span class="text"> so only the text gets struck through.
- * We also add a delete button.
- */
+// Clear button visibility
+function updateClearBtn() {
+  const doneCount = todos.filter(t => t.done).length;
+  clearBtn.hidden = doneCount === 0;
+}
+
+// Build <li>
 function createTodoLi(todo) {
   const li = document.createElement('li');
   li.dataset.id = todo.id;
   if (todo.done) li.classList.add('done');
 
-  // text element
   const textSpan = document.createElement('span');
   textSpan.className = 'text';
   textSpan.textContent = todo.text;
 
-  // delete button
   const delBtn = document.createElement('button');
   delBtn.className = 'delete';
   delBtn.textContent = '×';
   delBtn.setAttribute('aria-label', 'Delete task');
 
-  li.appendChild(textSpan);
-  li.appendChild(delBtn);
+  li.append(textSpan, delBtn);
   return li;
 }
 
-/* Render all tasks (used only at initial load). */
+// Initial render
 function renderInitial() {
   list.innerHTML = '';
   todos.forEach(t => list.appendChild(createTodoLi(t)));
+  applyFilter();        // ensure visibility matches stored filter
+  updateCounts();
+  updateClearBtn();
+  markActiveFilterButton();
 }
 
-/* Add a new task from the input field. */
+// Add
 function addTodo() {
   const text = input.value.trim();
   if (!text) return;
-
   const todo = { id: Date.now(), text, done: false };
-  todos.push(todo);
-  saveTodos();
+  todos.push(todo); saveTodos();
 
-  // Append only the new element (no full re-render).
-  list.appendChild(createTodoLi(todo));
+  const li = createTodoLi(todo);
+  list.appendChild(li);
 
-  // Button pulse effect.
   addBtn.classList.add('pulse');
   setTimeout(() => addBtn.classList.remove('pulse'), 200);
 
-  input.value = '';
-  input.focus();
-  updateClearBtn();
+  input.value = ''; input.focus();
+
+  updateCounts(); updateClearBtn(); applyFilter();
 }
 
-/* Toggle the done state of a task (by id).
- * We also update the DOM node directly (without re-render).
- */
+// Toggle done
 function toggleDone(id, li) {
   const item = todos.find(t => t.id === id);
   if (!item) return;
-  item.done = !item.done;
-  saveTodos();
+  item.done = !item.done; saveTodos();
 
   li.classList.toggle('done');
-  updateClearBtn();
+  updateCounts(); updateClearBtn(); applyFilter();
 }
 
-/* Delete a task (smooth collapse animation). */
+// Delete
 function deleteTodo(id, li) {
   li.classList.add('removing');
   li.addEventListener('transitionend', () => {
     todos = todos.filter(t => t.id !== id);
     saveTodos();
     li.remove();
-    updateClearBtn();
+    updateCounts(); updateClearBtn(); applyFilter();
   }, { once: true });
 }
 
-/* Remove all completed tasks. */
+// Clear completed
 function clearCompleted() {
   const doneLis = Array.from(list.querySelectorAll('li.done'));
   if (doneLis.length === 0) return;
-
-  // Visual feedback on the button
   clearBtn.classList.add('pulse');
   setTimeout(() => clearBtn.classList.remove('pulse'), 200);
 
-  let finished = 0;
+  let processed = 0;
   doneLis.forEach(li => {
     li.classList.add('removing');
     li.addEventListener('transitionend', () => {
       li.remove();
-      finished++;
-      if (finished === doneLis.length) {
+      processed++;
+      if (processed === doneLis.length) {
         todos = todos.filter(t => !t.done);
         saveTodos();
-        updateClearBtn();
+        updateCounts(); updateClearBtn(); applyFilter();
       }
     }, { once: true });
   });
 }
 
-/* Event handlers */
-// Add via click
+// Filter helpers
+function setFilter(name) {
+  currentFilter = name;            // all | active | completed
+  localStorage.setItem('filter', name);
+  markActiveFilterButton();
+  applyFilter();
+}
+function markActiveFilterButton() {
+  filterBtns.forEach(btn => {
+    const active = btn.dataset.filter === currentFilter;
+    btn.classList.toggle('active', active);
+    btn.setAttribute('aria-selected', active ? 'true' : 'false');
+  });
+}
+function applyFilter() {
+  // We don't re-render; we toggle a .hidden class per item
+  const lis = list.querySelectorAll('li');
+  lis.forEach(li => {
+    const done = li.classList.contains('done');
+    let show = true;
+    if (currentFilter === 'active') show = !done;
+    if (currentFilter === 'completed') show = done;
+    li.classList.toggle('hidden', !show);
+  });
+}
+
+// Events
 addBtn.addEventListener('click', addTodo);
-// Add via Enter key
-input.addEventListener('keydown', (e) => {
-  if (e.key === 'Enter') addTodo();
-});
-// Clear completed
 clearBtn.addEventListener('click', clearCompleted);
-// Delegated click: toggle done or delete
+
+input.addEventListener('keydown', (e) => { if (e.key === 'Enter') addTodo(); });
+
 list.addEventListener('click', (e) => {
   const li = e.target.closest('li');
   if (!li) return;
   const id = Number(li.dataset.id);
-
-  if (e.target.classList.contains('delete')) {
-    deleteTodo(id, li);
-    return;
-  }
-  if (e.target.classList.contains('text') || e.target === li) {
-    toggleDone(id, li);
-  }
+  if (e.target.classList.contains('delete')) { deleteTodo(id, li); return; }
+  if (e.target.classList.contains('text') || e.target === li) { toggleDone(id, li); }
 });
 
-/* Boot: load & render */
+filterBtns.forEach(btn => {
+  btn.addEventListener('click', () => setFilter(btn.dataset.filter));
+});
+
+// Boot
 loadTodos();
 renderInitial();
-updateClearBtn();
+// restore filter choice on load
+setFilter(currentFilter);
