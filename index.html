@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Todo List</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <!-- Main container -->
+    <main class="app">
+      <h1>ToDo List</h1>
+      <!-- Controls: input + two buttons (Add, Clear completed) -->
+      <!-- index.html (fragment) -->
+      <div class="controls">
+        <input
+          id="todo-input"
+          class="input"
+          type="text"
+          placeholder="Add a new task..."
+          aria-label="New task"
+          autocomplete="off"
+        />
+        <button id="add-todo" class="btn" aria-label="Add task">Add</button>
+        <button
+          id="clear-completed"
+          class="btn btn--ghost"
+          aria-label="Clear completed tasks"
+          hidden
+        >
+          Clear completed
+        </button>
+        <span id="items-left" aria-live="polite"></span>
+        <!-- NEW: counter -->
+      </div>
+      <!-- UL container: JS inserts <li> items here -->
+      <ul id="todo-list" aria-live="polite"></ul>
+    </main>
+    <script src="app.js"></script>
+  </body>
+</html>

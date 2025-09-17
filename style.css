@@ -1,0 +1,263 @@
+/* ============== Reset & base ============== */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* Design tokens: colors, sizes, etc. */
+:root {
+  --bg: #1e1e1e;
+  --text: #f0f0f0;
+  --card: #333333;
+  --stroke: #383838;
+
+  --brand: #8e44ad; /* primary purple */
+  --brand-hover: #a566c5; /* lighter purple on hover */
+  --accent: #a8ff60; /* lime for active/complete */
+  --accent-border: #5a7f3a; /* darker lime for complete border */
+  --accent-background: rgba(
+    168,
+    255,
+    96,
+    0.15
+  ); /* tinted background for done items */
+
+  --radius: 8px;
+  --gap: 0.5rem;
+  --container-max: 720px;
+
+  --control-size: 44px;
+  --control-pad-x: 14px;
+  --btn-min-width: 96px;
+}
+
+html,
+body {
+  height: 100%;
+}
+body {
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  line-height: 1.6;
+  background: var(--bg);
+  color: var(--text);
+}
+
+/* Container to center app content */
+.app {
+  max-width: var(--container-max);
+  margin: 2rem auto;
+  padding: 0 1rem;
+}
+
+h1 {
+  text-align: center;
+  margin: 1rem 0;
+  color: var(--brand);
+}
+
+/* =========================
+   Controls section
+   ========================= */
+.controls {
+  display: flex; /* row on desktop */
+  align-items: center;
+  gap: var(--gap);
+  margin-top: 1rem;
+}
+
+/* Force input and primary button to share same height */
+.controls > .input,
+.controls > .btn {
+  height: var(--control-size);
+}
+
+.input {
+  flex: 1;
+  min-width: 0;
+  padding: 0 var(--control-pad-x);
+  border: 2px solid var(--stroke);
+  border-radius: var(--radius);
+  background: #1f1f1f;
+  color: var(--text);
+  font-size: 16px;
+  outline: none;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.btn {
+  min-width: var(--btn-min-width);
+  padding: 0 var(--control-pad-x);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 16px;
+  color: #fff;
+  background: var(--brand);
+  border: 2px solid var(--brand);
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: background-color 0.25s, color 0.25s, border-color 0.25s,
+    transform 0.08s;
+}
+.btn:hover {
+  background: var(--brand-hover);
+  border-color: var(--brand-hover);
+}
+.btn:active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #222;
+}
+
+/* Secondary (ghost) button for clearing completed */
+.btn--ghost {
+  background: transparent;
+  color: #cfcfcf;
+  border: 2px solid var(--stroke);
+}
+.btn--ghost:hover {
+  color: #fff;
+  border-color: #888;
+  background: #2a2a2a;
+}
+
+/* For an optional disabled state (if you choose to disable instead of hide) */
+.btn.is-disabled,
+.btn[disabled] {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* Press animation, triggered from JS */
+@keyframes btnPulse {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(0.98);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+.btn.pulse {
+  animation: btnPulse 0.18s ease;
+}
+
+/* =========================
+   List styling
+   ========================= */
+ul {
+  list-style: none;
+  padding-left: 0;
+  margin-top: 1rem;
+}
+
+#todo-list li {
+  background: var(--card);
+  border: 1px solid var(--stroke);
+  border-radius: var(--radius);
+  padding: 0.75rem 1rem;
+  margin-bottom: 0.5rem;
+
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+
+  animation: fadeSlideIn 0.18s ease; /* appear nicely when added */
+}
+
+/* Text span: strike-through applies only here */
+#todo-list li .text {
+  flex: 1;
+}
+
+/* Completed (done) tasks:
+   - tinted lime background & darker border
+   - strike-through on text only */
+#todo-list li.done {
+  background: var(--accent-background);
+  border-color: var(--accent-border);
+}
+#todo-list li.done .text {
+  text-decoration: line-through;
+  opacity: 0.8;
+}
+
+/* Delete button (×) */
+.delete {
+  width: 28px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  color: #bbb;
+  border: 1px solid var(--stroke);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: color 0.2s, border-color 0.2s, background 0.2s;
+}
+.delete:hover {
+  color: #fff;
+  border-color: #888;
+  background: #2a2a2a;
+}
+
+/* Collapse animation for removal */
+#todo-list li.removing {
+  opacity: 0;
+  transform: translateY(-4px);
+  margin: 0;
+  padding-top: 0;
+  padding-bottom: 0;
+  border-width: 0;
+  height: 0;
+  overflow: hidden;
+  transition: all 0.18s ease;
+}
+
+/* Entry animation */
+@keyframes fadeSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* =========================
+   Responsive
+   ========================= */
+@media (max-width: 520px) {
+  :root {
+    --btn-min-width: 100%;
+    --control-pad-x: 12px;
+  }
+  .controls {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.75rem;
+  }
+  .btn,
+  .input {
+    width: 100%;
+    height: 44px;
+    border-radius: 10px;
+  }
+}
+@media (max-width: 380px) {
+  :root {
+    --control-pad-x: 10px;
+  }
+  .btn {
+    font-size: 0.95rem;
+  }
+}
